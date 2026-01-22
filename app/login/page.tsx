@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import Link from 'next/link';
 import { Form } from 'app/form';
 import { signIn } from 'app/auth';
