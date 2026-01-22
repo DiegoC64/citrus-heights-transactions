@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { auth, signOut } from 'app/auth';
 
 export default async function ProtectedPage() {
