@@ -1,5 +1,5 @@
 import { drizzle } from "drizzle-orm/postgres-js";
-import { pgTable, serial, varchar, date, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, varchar } from "drizzle-orm/pg-core";
 import { eq } from "drizzle-orm";
 import postgres from "postgres";
 import { genSaltSync, hashSync } from "bcrypt-ts";
@@ -62,27 +62,12 @@ export async function createUser(email: string, password: string) {
   return await getDb().insert(users).values({ email, password: hash });
 }
 
+/**
+ * IMPORTANT:
+ * DigitalOcean DB user may not have permission to CREATE TABLE in production.
+ * So we only define the table schema here — no runtime CREATE TABLE calls.
+ */
 async function ensureUsersTableExists() {
-  const client = getClient();
-
-  const result = await client`
-    SELECT EXISTS (
-      SELECT FROM information_schema.tables
-      WHERE table_schema = 'public'
-      AND table_name = 'User'
-    );
-  `;
-
-  if (!result[0]?.exists) {
-    await client`
-      CREATE TABLE "User" (
-        id SERIAL PRIMARY KEY,
-        email VARCHAR(64),
-        password VARCHAR(64)
-      );
-    `;
-  }
-
   const users = pgTable("User", {
     id: serial("id").primaryKey(),
     email: varchar("email", { length: 64 }),
@@ -96,28 +81,11 @@ async function ensureUsersTableExists() {
    TRANSACTIONS
 ========================= */
 
+/**
+ * IMPORTANT:
+ * Do not attempt to CREATE TABLE at runtime.
+ * We return the schema definition only.
+ */
 export async function ensureTransactionsTableExists() {
-  const client = getClient();
-
-  const result = await client`
-    SELECT EXISTS (
-      SELECT FROM information_schema.tables
-      WHERE table_schema = 'public'
-      AND table_name = 'transactions'
-    );
-  `;
-
-  if (!result[0]?.exists) {
-    await client`
-      CREATE TABLE transactions (
-        id SERIAL PRIMARY KEY,
-        address VARCHAR(255) NOT NULL,
-        acceptance_date DATE NOT NULL,
-        status VARCHAR(20) DEFAULT 'open',
-        created_at TIMESTAMP DEFAULT NOW()
-      );
-    `;
-  }
-
   return transactions;
 }
